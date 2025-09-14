@@ -5,16 +5,8 @@ export interface RetryOptions {
   maxDelayMs?: number;
 }
 
-export async function retry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {}
-): Promise<T> {
-  const {
-    maxAttempts = 3,
-    delayMs = 1000,
-    backoffMultiplier = 2,
-    maxDelayMs = 10000
-  } = options;
+export async function retry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
+  const { maxAttempts = 3, delayMs = 1000, backoffMultiplier = 2, maxDelayMs = 10000 } = options;
 
   let lastError: Error | undefined;
   let delay = delayMs;
@@ -24,7 +16,7 @@ export async function retry<T>(
       return await fn();
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       // Don't retry on client errors (4xx)
       if (error instanceof Error && error.message.includes('HTTP 4')) {
         throw error;

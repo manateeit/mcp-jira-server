@@ -21,7 +21,7 @@ export interface ProjectFieldMap {
 
 export class FieldDetector {
   private fieldCache: ProjectFieldMap = {};
-  
+
   constructor(private client: JiraClient) {}
 
   /**
@@ -29,7 +29,7 @@ export class FieldDetector {
    */
   async detectFields(projectKey: string, issueType?: string): Promise<DetectedFields> {
     const cacheKey = `${projectKey}-${issueType || 'all'}`;
-    
+
     // Return cached result if available
     if (this.fieldCache[cacheKey]) {
       logger.debug('Returning cached fields', { projectKey, issueType });
@@ -38,7 +38,7 @@ export class FieldDetector {
 
     try {
       logger.info('Detecting fields', { projectKey, issueType });
-      
+
       const result = await this.client.getCreateMeta(projectKey);
       if (!result.success || !result.data) {
         logger.error('Failed to get field metadata', { error: result.error });
@@ -58,48 +58,23 @@ export class FieldDetector {
           /story\s*point/i,
           /estimation/i,
           /bodové\s*ohodnocení/i,
-          /body/i
+          /body/i,
         ],
-        epicLink: [
-          /epic\s*link/i,
-          /parent\s*epic/i,
-          /epic\s*name/i,
-          /epic/i
-        ],
+        epicLink: [/epic\s*link/i, /parent\s*epic/i, /epic\s*name/i, /epic/i],
         acceptanceCriteria: [
           /acceptance\s*criteria/i,
           /akceptační\s*kritéria/i,
-          /definition\s*of\s*done/i
+          /definition\s*of\s*done/i,
         ],
-        team: [
-          /team/i,
-          /tým/i
-        ],
-        startDate: [
-          /start\s*date/i,
-          /datum\s*zahájení/i,
-          /začátek/i
-        ],
-        dueDate: [
-          /due\s*date/i,
-          /datum\s*dokončení/i,
-          /termín/i,
-          /deadline/i
-        ],
-        originalEstimate: [
-          /original\s*estimate/i,
-          /původní\s*odhad/i,
-          /initial\s*estimate/i
-        ],
-        remainingEstimate: [
-          /remaining\s*estimate/i,
-          /zbývající\s*odhad/i,
-          /time\s*remaining/i
-        ]
+        team: [/team/i, /tým/i],
+        startDate: [/start\s*date/i, /datum\s*zahájení/i, /začátek/i],
+        dueDate: [/due\s*date/i, /datum\s*dokončení/i, /termín/i, /deadline/i],
+        originalEstimate: [/original\s*estimate/i, /původní\s*odhad/i, /initial\s*estimate/i],
+        remainingEstimate: [/remaining\s*estimate/i, /zbývající\s*odhad/i, /time\s*remaining/i],
       };
 
       // Analyze all issue types or specific one
-      const issueTypes = issueType 
+      const issueTypes = issueType
         ? project.issuetypes?.filter((it: any) => it.name.toLowerCase() === issueType.toLowerCase())
         : project.issuetypes;
 
@@ -110,7 +85,7 @@ export class FieldDetector {
 
       // Collect fields from all relevant issue types
       const allFields = new Map<string, any>();
-      
+
       for (const it of issueTypes) {
         if (it.fields) {
           Object.entries(it.fields).forEach(([key, field]: [string, any]) => {
@@ -124,14 +99,14 @@ export class FieldDetector {
       // Match fields against patterns
       allFields.forEach((field, key) => {
         const fieldName = field.name?.toLowerCase() || '';
-        
+
         for (const [fieldType, patterns] of Object.entries(fieldPatterns)) {
           if (patterns.some(pattern => pattern.test(fieldName))) {
             detectedFields[fieldType] = key;
-            logger.info('Detected field', { 
-              type: fieldType, 
-              fieldId: key, 
-              fieldName: field.name 
+            logger.info('Detected field', {
+              type: fieldType,
+              fieldId: key,
+              fieldName: field.name,
             });
             break; // Only match first pattern
           }
@@ -140,12 +115,12 @@ export class FieldDetector {
 
       // Cache the result
       this.fieldCache[cacheKey] = detectedFields;
-      
-      logger.info('Field detection complete', { 
-        projectKey, 
-        detectedCount: Object.keys(detectedFields).length 
+
+      logger.info('Field detection complete', {
+        projectKey,
+        detectedCount: Object.keys(detectedFields).length,
       });
-      
+
       return detectedFields;
     } catch (error) {
       logger.error('Error detecting fields', error);

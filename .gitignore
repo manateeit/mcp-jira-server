@@ -7,6 +7,7 @@ build/
 *.js
 *.js.map
 *.d.ts
+*.d.ts.map
 
 # Environment files
 .env
@@ -49,3 +50,4 @@ claude_settings_personal.json
 
 # Local scripts
 run-jira-mcp.sh
+.mcp.json
