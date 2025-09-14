@@ -497,8 +497,8 @@ export function validateJqlSyntax(jql: string): { valid: boolean; errors: string
     errors.push('JQL query cannot be empty');
   }
   
-  if (jql.length > 100000) {
-    errors.push('JQL query is too long (>100,000 characters)');
+  if (jql.length > 8000) {
+    errors.push('JQL query is too long (>8,000 characters)');
   }
   
   // Check for potentially problematic patterns

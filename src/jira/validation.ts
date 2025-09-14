@@ -79,7 +79,7 @@ export const DEFAULT_VALIDATION_OPTIONS: Required<ValidationOptions> = {
   strict: false,
   performanceWarnings: true,
   securityChecks: true,
-  maxJqlLength: 100000,
+  maxJqlLength: 8000,
   customFieldPatterns: [/^customfield_\d+$/],
 };
 

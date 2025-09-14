@@ -109,7 +109,8 @@ export class EnhancedJqlClient {
       
       // Log request if enabled
       if (this.config.enableLogging) {
-        console.log(`[${operationId}] Enhanced JQL ${httpMethod} request:`, {
+        this.logger.info(`Enhanced JQL ${httpMethod} request`, {
+          operationId,
           url: httpParams.url,
           jql: request.jql.substring(0, 100) + (request.jql.length > 100 ? '...' : ''),
           maxResults: request.maxResults,
