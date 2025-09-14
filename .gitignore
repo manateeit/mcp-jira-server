@@ -49,3 +49,4 @@ claude_settings_personal.json
 
 # Local scripts
 run-jira-mcp.sh
+.mcp.json

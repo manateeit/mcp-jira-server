@@ -1,0 +1,281 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Jira Enhanced JQL API Contract",
+    "version": "3.0.0",
+    "description": "Contract for Jira Cloud Enhanced JQL API endpoints"
+  },
+  "servers": [
+    {
+      "url": "https://{domain}.atlassian.net/rest/api/3",
+      "variables": {
+        "domain": {
+          "description": "Jira Cloud domain",
+          "example": "your-domain"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/search/jql": {
+      "get": {
+        "summary": "Search issues using JQL (GET method)",
+        "description": "Search for issues using JQL query via GET request. Suitable for simple queries under URL length limits.",
+        "parameters": [
+          {
+            "name": "jql",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "JQL query string (URL encoded)",
+            "example": "project%20%3D%20AIS360%20ORDER%20BY%20created%20DESC"
+          },
+          {
+            "name": "maxResults",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "description": "Maximum number of results to return"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Comma-separated list of fields to include",
+            "example": "id,key,summary,status"
+          },
+          {
+            "name": "expand",
+            "in": "query", 
+            "schema": { "type": "string" },
+            "description": "Comma-separated list of fields to expand",
+            "example": "changelog,renderedFields"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Pagination cursor token"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (invalid JQL)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Insufficient permissions"
+          },
+          "429": {
+            "description": "Rate limited",
+            "headers": {
+              "Retry-After": {
+                "schema": { "type": "integer" },
+                "description": "Seconds to wait before retry"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Requests remaining in window"
+              }
+            }
+          }
+        },
+        "security": [
+          { "basicAuth": [] },
+          { "bearerAuth": [] }
+        ]
+      },
+      "post": {
+        "summary": "Search issues using JQL (POST method)",
+        "description": "Search for issues using JQL query via POST request. Suitable for complex queries that exceed GET URL limits.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (invalid JQL)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Insufficient permissions"
+          },
+          "429": {
+            "description": "Rate limited",
+            "headers": {
+              "Retry-After": {
+                "schema": { "type": "integer" },
+                "description": "Seconds to wait before retry"
+              }
+            }
+          }
+        },
+        "security": [
+          { "basicAuth": [] },
+          { "bearerAuth": [] }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SearchRequest": {
+        "type": "object",
+        "required": ["jql"],
+        "properties": {
+          "jql": {
+            "type": "string",
+            "description": "JQL query string",
+            "example": "project = AIS360 ORDER BY created DESC"
+          },
+          "maxResults": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "fields": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Fields to include in response"
+          },
+          "expand": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Additional data to expand"
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Pagination cursor token"
+          }
+        }
+      },
+      "SearchResult": {
+        "type": "object",
+        "required": ["issues"],
+        "properties": {
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Issue"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of issues (may be undefined for cursor pagination)"
+          },
+          "cursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cursor for next page (null if last page)"
+          }
+        }
+      },
+      "Issue": {
+        "type": "object",
+        "required": ["id", "key", "self"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Issue ID"
+          },
+          "key": {
+            "type": "string",
+            "description": "Issue key",
+            "example": "AIS360-123"
+          },
+          "self": {
+            "type": "string",
+            "format": "uri",
+            "description": "REST URL for this issue"
+          },
+          "fields": {
+            "type": "object",
+            "description": "Issue fields based on field selection",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "errorMessages": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Error messages"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": { "type": "string" },
+            "description": "Field-specific errors"
+          },
+          "warningMessages": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Warning messages"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "Basic authentication using email and API token"
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer token authentication"
+      }
+    }
+  }
+}

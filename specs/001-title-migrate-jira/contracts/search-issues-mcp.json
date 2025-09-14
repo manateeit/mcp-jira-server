@@ -1,0 +1,236 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Jira MCP Search Issues Tool Contract",
+    "version": "2.0.0",
+    "description": "MCP tool contract for Enhanced JQL API migration"
+  },
+  "components": {
+    "schemas": {
+      "SearchIssuesRequest": {
+        "type": "object",
+        "required": ["jql"],
+        "properties": {
+          "jql": {
+            "type": "string",
+            "description": "JQL query string",
+            "example": "project = AIS360 ORDER BY created DESC"
+          },
+          "maxResults": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50,
+            "description": "Maximum number of results to return"
+          },
+          "fields": {
+            "oneOf": [
+              {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              {
+                "type": "string",
+                "enum": ["*all", "*navigable"]
+              }
+            ],
+            "description": "Fields to include in response",
+            "example": ["id", "key", "summary", "status"]
+          },
+          "expand": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Additional data to expand",
+            "example": ["changelog", "renderedFields"]
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Pagination cursor token from previous response",
+            "nullable": true
+          },
+          "method": {
+            "type": "string",
+            "enum": ["auto", "GET", "POST"],
+            "default": "auto",
+            "description": "HTTP method selection strategy"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Legacy parameter, maps to maxResults",
+            "deprecated": true
+          },
+          "startAt": {
+            "type": "integer", 
+            "description": "Legacy parameter, converted to cursor navigation",
+            "deprecated": true
+          }
+        }
+      },
+      "JiraIssue": {
+        "type": "object",
+        "required": ["id", "key", "self"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique issue identifier",
+            "example": "10001"
+          },
+          "key": {
+            "type": "string",
+            "description": "Human-readable issue key",
+            "example": "AIS360-123",
+            "pattern": "^[A-Z][A-Z0-9_]*-[0-9]+$"
+          },
+          "self": {
+            "type": "string",
+            "format": "uri",
+            "description": "REST API URL for this issue"
+          },
+          "fields": {
+            "type": "object",
+            "description": "Issue field data based on field selection",
+            "additionalProperties": true,
+            "properties": {
+              "summary": { "type": "string" },
+              "description": { "type": "string" },
+              "status": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "id": { "type": "string" }
+                }
+              },
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string", 
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "ResponseMetadata": {
+        "type": "object",
+        "required": ["timing"],
+        "properties": {
+          "timing": {
+            "type": "object",
+            "required": ["requestTime", "responseTime", "duration"],
+            "properties": {
+              "requestTime": {
+                "type": "integer",
+                "description": "Request timestamp (Unix milliseconds)"
+              },
+              "responseTime": {
+                "type": "integer", 
+                "description": "Response timestamp (Unix milliseconds)"
+              },
+              "duration": {
+                "type": "number",
+                "description": "Request duration in milliseconds"
+              }
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "API warnings or deprecation notices"
+          },
+          "rateLimit": {
+            "type": "object",
+            "properties": {
+              "remaining": {
+                "type": "integer",
+                "description": "Requests remaining in current window"
+              },
+              "resetTime": {
+                "type": "integer",
+                "description": "Rate limit reset timestamp"
+              },
+              "retryAfter": {
+                "type": "integer",
+                "description": "Seconds to wait if rate limited"
+              }
+            }
+          }
+        }
+      },
+      "SearchIssuesResponse": {
+        "type": "object",
+        "required": ["issues", "meta"],
+        "properties": {
+          "issues": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/JiraIssue" },
+            "description": "Array of matching Jira issues"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total count (may be undefined for cursor pagination)"
+          },
+          "cursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Next page token for pagination (null for final page)"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMetadata"
+          },
+          "startAt": {
+            "type": "integer",
+            "description": "Legacy field for backward compatibility",
+            "deprecated": true
+          },
+          "maxResults": {
+            "type": "integer", 
+            "description": "Legacy field for backward compatibility",
+            "deprecated": true
+          }
+        }
+      },
+      "JiraApiError": {
+        "type": "object",
+        "required": ["errorMessages"],
+        "properties": {
+          "errorMessages": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Human-readable error messages"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": { "type": "string" },
+            "description": "Field-specific error details"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code"
+          },
+          "warningMessages": {
+            "type": "array", 
+            "items": { "type": "string" },
+            "description": "Non-fatal warnings"
+          }
+        }
+      }
+    }
+  },
+  "paths": {},
+  "x-mcp-tool": {
+    "name": "search-issues",
+    "description": "Search Jira issues using Enhanced JQL API with cursor-based pagination",
+    "inputSchema": {
+      "$ref": "#/components/schemas/SearchIssuesRequest"
+    },
+    "outputSchema": {
+      "$ref": "#/components/schemas/SearchIssuesResponse"
+    },
+    "errorSchema": {
+      "$ref": "#/components/schemas/JiraApiError"
+    }
+  }
+}
