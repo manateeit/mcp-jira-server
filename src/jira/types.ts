@@ -543,6 +543,9 @@ export function isJiraApiError(obj: any): obj is JiraApiError {
 /** Maximum characters in JQL query before switching to POST method */
 export const MAX_GET_QUERY_LENGTH = 1500;
 
+/** Maximum allowed JQL query length */
+export const MAX_JQL_LENGTH = 8000;
+
 /** Default maximum results per page */
 export const DEFAULT_MAX_RESULTS = 50;
 
@@ -551,6 +554,9 @@ export const MAX_RESULTS_LIMIT = 100;
 
 /** Default request timeout in milliseconds */
 export const DEFAULT_TIMEOUT = 30000;
+
+/** Maximum number of metrics entries to store in memory */
+export const MAX_METRICS_ENTRIES = 100;
 
 /** Enhanced JQL API base path */
 export const ENHANCED_JQL_PATH = '/rest/api/3/search/jql';

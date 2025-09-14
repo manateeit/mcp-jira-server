@@ -72,9 +72,14 @@ class Logger {
     const timestamp = new Date().toISOString();
     const prefix = `[${timestamp}] [${level.toUpperCase()}] [${this.context}]`;
 
-    console.error(`${prefix} ${message}`);
+    // Use appropriate console method for each log level
+    const consoleMethod = level === 'error' ? console.error : 
+                         level === 'warn' ? console.warn : 
+                         console.log;
+    
+    consoleMethod(`${prefix} ${message}`);
     if (data) {
-      console.error(JSON.stringify(data, null, 2));
+      consoleMethod(JSON.stringify(data, null, 2));
     }
   }
 

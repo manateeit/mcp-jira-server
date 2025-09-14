@@ -14,6 +14,9 @@ import {
   FieldSelection,
   HttpMethod,
   MAX_RESULTS_LIMIT,
+  MAX_JQL_LENGTH,
+  MAX_GET_QUERY_LENGTH,
+  DEFAULT_MAX_RESULTS,
   SPECIAL_FIELD_VALUES,
 } from './types';
 
@@ -79,7 +82,7 @@ export const DEFAULT_VALIDATION_OPTIONS: Required<ValidationOptions> = {
   strict: false,
   performanceWarnings: true,
   securityChecks: true,
-  maxJqlLength: 8000,
+  maxJqlLength: MAX_JQL_LENGTH,
   customFieldPatterns: [/^customfield_\d+$/],
 };
 
@@ -265,7 +268,7 @@ export class ParameterValidator {
 
     // Estimate complexity
     const complexity = this.estimateJqlComplexity(trimmedJql, components);
-    const recommendedMethod = complexity === 'complex' || trimmedJql.length > 1500 ? 'POST' : 'GET';
+    const recommendedMethod = complexity === 'complex' || trimmedJql.length > MAX_GET_QUERY_LENGTH ? 'POST' : 'GET';
 
     // Performance warnings
     if (this.options.performanceWarnings) {
@@ -278,8 +281,8 @@ export class ParameterValidator {
     }
 
     // Generate suggestions
-    if (trimmedJql.length > 1500 && !suggestions.some(s => s.includes('POST'))) {
-      suggestions.push('Consider using POST method for complex queries over 1500 characters');
+    if (trimmedJql.length > MAX_GET_QUERY_LENGTH && !suggestions.some(s => s.includes('POST'))) {
+      suggestions.push(`Consider using POST method for complex queries over ${MAX_GET_QUERY_LENGTH} characters`);
     }
 
     return {
@@ -315,7 +318,7 @@ export class ParameterValidator {
     }
 
     // Performance warnings
-    if (maxResults > 50) {
+    if (maxResults > DEFAULT_MAX_RESULTS) {
       warnings.push('Large maxResults values may impact performance');
     }
 
@@ -583,9 +586,9 @@ export class ParameterValidator {
     let complexity = 0;
 
     // Length factor (higher weight for long queries to ensure they're classified as complex)
-    if (jql.length > 1500) {
+    if (jql.length > MAX_GET_QUERY_LENGTH) {
       complexity += 5;
-    } else if (jql.length > 500) {
+    } else if (jql.length > 500) { // Keep 500 as is since it's a different threshold
       complexity += 2;
     } else if (jql.length > 100) {
       complexity += 1;

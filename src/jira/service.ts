@@ -18,6 +18,9 @@ import {
   SearchMetrics,
   DEFAULT_MAX_RESULTS,
   MAX_RESULTS_LIMIT,
+  MAX_JQL_LENGTH,
+  MAX_GET_QUERY_LENGTH,
+  MAX_METRICS_ENTRIES,
   isSearchRequest,
 } from './types.js';
 import { EnhancedJqlClient } from './client.js';
@@ -357,8 +360,8 @@ export class EnhancedJqlService {
 
     this.metrics.set(operationId, metrics);
 
-    // Limit metrics storage to prevent memory leaks
-    if (this.metrics.size > 100) {
+    // Limit metrics storage to prevent memory leaks (LRU-style cleanup)
+    if (this.metrics.size > MAX_METRICS_ENTRIES) {
       const firstKey = this.metrics.keys().next().value;
       if (firstKey) {
         this.metrics.delete(firstKey);
@@ -497,8 +500,8 @@ export function validateJqlSyntax(jql: string): { valid: boolean; errors: string
     errors.push('JQL query cannot be empty');
   }
   
-  if (jql.length > 8000) {
-    errors.push('JQL query is too long (>8,000 characters)');
+  if (jql.length > MAX_JQL_LENGTH) {
+    errors.push(`JQL query is too long (>${MAX_JQL_LENGTH.toLocaleString()} characters)`);
   }
   
   // Check for potentially problematic patterns
@@ -524,9 +527,9 @@ export function estimateQueryComplexity(jql: string): {
   let complexityScore = 0;
   
   // Length factor
-  if (jql.length > 1500) {
+  if (jql.length > MAX_GET_QUERY_LENGTH) {
     complexityScore += 4; // Ensure long queries are classified as complex
-    factors.push('Long query (>1500 chars)');
+    factors.push(`Long query (>${MAX_GET_QUERY_LENGTH} chars)`);
   }
   
   // Operator complexity
@@ -563,7 +566,7 @@ export function estimateQueryComplexity(jql: string): {
     recommendedMethod = 'GET';
   } else if (complexityScore <= 3) {
     complexity = 'moderate';
-    recommendedMethod = jql.length > 1500 ? 'POST' : 'GET';
+    recommendedMethod = jql.length > MAX_GET_QUERY_LENGTH ? 'POST' : 'GET';
   } else {
     complexity = 'complex';
     recommendedMethod = 'POST';
